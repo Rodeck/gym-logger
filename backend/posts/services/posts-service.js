@@ -1,23 +1,17 @@
 
-const data = [
-    {
-        id: 1,
-        name: "Post 1",
-        content: "This is post number 1, how awesome."
-    },
-    {
-        id: 2,
-        name: "Post number two",
-        content: "This is post number 2, even more epic."
-    },
-]
+const { insertItem, getItems, getCollection } = require('./../../db')
+const postsCollection = 'posts';
 
 const get = function(_id){
-    return getAll().find(account => account.id == _id);
+    return getItems(postsCollection).find(p => p._id == _id)
+}
+
+const create = function(post){
+    insertItem(post, postsCollection)
 }
 
 const getAll = function(){
-    return data;
+    return getItems(postsCollection)
 }
 
 module.exports = {
