@@ -16,5 +16,6 @@ const getAll = function(){
 
 module.exports = {
     get,
-    getAll
+    getAll,
+    create
 };

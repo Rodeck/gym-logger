@@ -7,7 +7,10 @@ const dbName = 'store'
 let db
 
 const init = () =>
-  MongoClient.connect(dbConfig.url, { useNewUrlParser: true }).then((client) => {
+  MongoClient.connect(dbConfig.url, { useNewUrlParser: true, auth: {
+    username: dbConfig.username,
+    password: dbConfig.password
+  } }).then((client) => {
     db = client.db(dbName)
   })
 
