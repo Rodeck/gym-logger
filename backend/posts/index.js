@@ -12,7 +12,7 @@ router.use(function timeLog (req, res, next) {
 
 /**
  * @swagger
- * /posts:
+ * /post:
  *   post:
  *     summary: Create a JSONPlaceholder user.
  *     description: Create new post
@@ -55,6 +55,7 @@ router.post('/', jsonParser, function (req, res) {
     let post = {
       title: req.body.title,
       description: req.body.description,
+      images: req.images,
     }
     res.send(postsService.create(post))
   })

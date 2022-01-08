@@ -1,6 +1,5 @@
-const dbConfig = require("./db.config.js");
-
 const { MongoClient, ObjectId } = require('mongodb')
+const dbConfig = require('./db.config')
 
 const dbName = 'store'
 
@@ -23,7 +22,7 @@ const insertItem = (item, collectionName) => {
 
 const getItems = (collectionName) => {
   const collection = db.collection(collectionName)
-  return collection.find({}).toArray()
+  return collection
 }
 
 const getCollection = (collectionName) => {
