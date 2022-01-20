@@ -8,7 +8,10 @@ const swaggerUi = require("swagger-ui-express")
 
 const express = require('express')
 const app = express()
-const port = 3000
+
+const environment = process.env.environment ?? 'local';
+const port = environment == 'local' ? 3000 : 80
+
 const admin = require('./authentication/index');
 var postRoutes = require('./posts/index')
 var locationRoutes = require('./location/index')
@@ -64,10 +67,10 @@ app.use(
 app.use(express.json())
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.send('Hello World from location service!')
 })
 
 init().then(() => {
-    console.log('starting server on port 3000')
+    console.log('starting server on port', port)
     app.listen(port)
 })

@@ -66,22 +66,23 @@ router.post('/', jsonParser, authorization.authorize, function (req, res) {
       userId: userId,
       latitude: req.body.latitude,
       longitude: req.body.longitude,
+      date: req.body.date,
     }
     res.send(service.create(location))
-  })
+})
 
 /**
  * @swagger
- * /location/{userId}:
+ * /location/last:
  *      get:
- *          description: Get all locations for given user
+ *          description: Get all recent locations for given user
  *          parameters:
- *            - in: path
- *              name: userId
+ *            - in: query
+ *              name: take
  *              schema:
- *                type: string
- *                required: true
- *                description: Id of the user
+ *                type: integer
+ *                required: false
+ *                description: How many last records to take
  *          responses:
  *              "200":
  *                  description: List of the locations for given user
@@ -105,11 +106,23 @@ router.post('/', jsonParser, authorization.authorize, function (req, res) {
  *                                      type: number
  *                                      description: Longitude part of the location.
  *                                      example: 18.168187942317314
+ *                                    date:
+ *                                      type: string
+ *                                      description: Date of the entry.
+ *                                      example: ???
  */
-router.get('/:userId', async (req, res) => {
-  let userId = req.params["userId"];
-  let locations = await service.get(userId);
-  res.send(locations)
+router.get('/last', authorization.authorize, async (req, res) => {
+  let userId = authorization.getUserId(req);
+  let take = req.query.take;
+  let locations = await service.getRecent(userId, parseInt(take));
+
+  res.send(locations.map(l => {
+    if (l.date === '' || l.date == null) {
+      l.date = new Date(2022,1,1,1,1,0);
+    }
+
+    return l;
+  }))
 })
 
 router.get('/', function (req, res) {

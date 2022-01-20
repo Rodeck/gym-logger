@@ -8,6 +8,14 @@ const get = function(_userId){
     }).toArray();
 }
 
+const getRecent = function(_userId, amount){
+    return getItems(collectionName).find({
+        userId: _userId
+    }).sort({
+        date: 1
+    }).limit(amount).toArray();
+}
+
 const create = function(location){
     insertItem(location, collectionName)
 }
@@ -19,5 +27,6 @@ const getAll = function(){
 module.exports = {
     get,
     getAll,
-    create
+    create,
+    getRecent
 };

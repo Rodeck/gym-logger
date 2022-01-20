@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  account-service:
+    restart: on-failure:5
+    build:
+      context: ./account-service
+      dockerfile: ./dockerfile
+    ports:
+      - "3001:80"
+      - "5678:5678"
+      - "9229:9229"
+    environment:
+      - environment=docker
+  location-service:
+    restart: on-failure:5
+    build:
+      context: ./location-service
+      dockerfile: ./dockerfile
+    ports:
+      - "3000:80"
+      - "5679:5678"
+      - "9230:9229"
+    environment:
+      - environment=docker
+  db:
+    image: 'mongo'
+    container_name: 'instagram-mongo'
+    ports:
+     - 27017:27017
+    environment:
+      - MONGO_INITDB_DATABASE=instagram-db
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=3)R79ZP,:cv}r_5(
+    volumes:
+      - mongo-volume:/data/db
+  gateway:
+    image: nginx
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - type: bind
+        source: ./nginx/default.conf
+        target: /etc/nginx/nginx.conf
+
+volumes:
+  mongo-volume:

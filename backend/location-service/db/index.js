@@ -1,5 +1,7 @@
 const { MongoClient, ObjectId } = require('mongodb')
-const dbConfig = require('./db.config')
+
+const env = process.env.environment ?? 'local';
+const dbConfig = require(env == 'local' ? './db.config' : './db.config.compose')
 
 const dbName = 'store'
 
