@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  db:
+    image: 'mongo'
+    container_name: 'instagram-mongo'
+    ports:
+     - 27017:27017
+    environment:
+      - MONGO_INITDB_DATABASE=instagram-db
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=3)R79ZP,:cv}r_5(
+    volumes:
+      - mongo-volume:/data/db
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    environment: 
+      RABBITMQ_DEFAULT_PASS: pass
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_VHOST: vhost
+  gateway:
+    image: nginx
+    restart: on-failure:10
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - type: bind
+        source: ./nginx/local.conf
+        target: /etc/nginx/nginx.conf
+
+volumes:
+  mongo-volume:

@@ -12,4 +12,9 @@ class UserStorage {
   setUser(User? user) => userSubject.add(user);
 
   setToken(String token) => tokenSubject.add(token);
+
+  clear() {
+    userSubject.add(null);
+    tokenSubject.add(null);
+  }
 }

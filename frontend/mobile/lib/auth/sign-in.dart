@@ -1,7 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'form_input_field.dart';
+import 'google_button.dart';
 import 'login.dart';
 
 class SignInPage extends StatelessWidget {
@@ -25,8 +26,8 @@ class SignInPage extends StatelessWidget {
     if (user != null) {
       Navigator.push(
         context,
-        new MaterialPageRoute(
-          builder: (context) => new LoginPage(),
+        MaterialPageRoute(
+          builder: (context) => LoginPage(),
         ),
       );
     } else {
@@ -43,61 +44,79 @@ class SignInPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Firebase Authentication'),
-      ),
       body: FutureBuilder(
         future: _initializeFirebase(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            return Form(
-              key: _formKey,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    const Text("Email"),
-                    TextFormField(
-                      controller: _emailController,
-                      // The validator receives the text that the user has entered.
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter some text';
-                        }
-                        return null;
-                      },
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Center(
+                  child: Card(
+                    margin: const EdgeInsets.all(10),
+                    child: Form(
+                      key: _formKey,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.fromLTRB(0, 0, 0, 30),
+                              child: const Image(
+                                  width: 100,
+                                  height: 100,
+                                  image: AssetImage('assets/images/logo.png')),
+                            ),
+                            const Text('Create new account',
+                                style: TextStyle(fontSize: 25)),
+                            FormInput('Email', 'Enter email', _emailController),
+                            FormInput(
+                              'Password',
+                              'Enter password',
+                              _passwordController,
+                              isPassword: true,
+                            ),
+                            Container(
+                                margin: const EdgeInsets.only(top: 10),
+                                child: GoogleSignInButton()),
+                            ElevatedButton(
+                              onPressed: () async {
+                                // Validate returns true if the form is valid, or false otherwise.
+                                if (_formKey.currentState!.validate()) {
+                                  // If the form is valid, display a snackbar. In the real world,
+                                  // you'd often call a server or save the information in a database.
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Processing Data')),
+                                  );
+                                  _register(context);
+                                }
+                              },
+                              child: const Text('Submit'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => LoginPage()),
+                                  (Route<dynamic> route) => false),
+                              child: Container(
+                                margin: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                                child: const Text(
+                                    "Already have an account? Login first."),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const Text("Password"),
-                    TextFormField(
-                      controller: _passwordController,
-                      // The validator receives the text that the user has entered.
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter some text';
-                        }
-                        return null;
-                      },
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Validate returns true if the form is valid, or false otherwise.
-                        if (_formKey.currentState!.validate()) {
-                          // If the form is valid, display a snackbar. In the real world,
-                          // you'd often call a server or save the information in a database.
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing Data')),
-                          );
-                          _register(context);
-                        }
-                      },
-                      child: const Text('Submit'),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             );
           }
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(),
           );
         },

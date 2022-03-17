@@ -32,4 +32,8 @@ const getCollection = (collectionName) => {
   //return collection.updateOne({ _id: ObjectId(id) }, { $inc: { quantity } })
 }
 
-module.exports = { init, insertItem, getItems, getCollection }
+const buildId = (id) => {
+  return new ObjectId(id);
+}
+
+module.exports = { init, insertItem, getItems, getCollection, buildId }

@@ -1,125 +1,145 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart' as gAuth;
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
-import 'package:mobile/storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-import '../exceptions.dart';
+import 'package:mobile/helpers/http_helpers.dart';
+import 'package:mobile/launch-screen/launch.dart';
+import 'package:mobile/models/login-result.dart';
+import 'package:mobile/models/user.dart';
+import 'package:mobile/storage/user-storage.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthService {
-  //you need to create an .env file with these environment variables
-  final kratosURL = dotenv.env['KRATOS_API'];
-  final backendURL = dotenv.env['BACKEND'];
+  Future logout(BuildContext context) async {
+    var storage = GetIt.instance<UserStorage>();
 
-  Future<String> signIn(String flowId, String email, String password) async {
-    var response = await http.post(
-        Uri.parse("$kratosURL/self-service/login?flow=$flowId"),
-        headers: <String, String>{"Content-Type": "application/json"},
-        body: jsonEncode(<String, String>{
-          "method": "password",
-          "password": password,
-          "password_identifier": email
-        }));
+    storage.clear();
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final String sessionToken = data["session_token"];
-      return sessionToken;
-    } else if (response.statusCode == 400) {
-      final data = jsonDecode(response.body);
-      final errors = checkForErrors(data);
-      throw InvalidCredentialsException(errors);
-    } else if (response.statusCode == 500) {
-      final data = jsonDecode(response.body);
-      final error = data["error"];
-      throw UnknownException(error["message"]);
-    } else if (response.statusCode == 422) {
-      final data = jsonDecode(response.body);
-      final error = data["message"];
-      throw UnknownException(error);
-    } else {
-      throw Exception();
-    }
-  }
-
-  Future<String> signUp(String flowId, String email, String password) async {
-    final response = await http.post(
-        Uri.parse("$kratosURL/self-service/registration?flow=$flowId"),
-        headers: <String, String>{"Content-Type": "application/json"},
-        body: jsonEncode(<String, String>{
-          "method": "password",
-          "password": password,
-          "traits.email": email
-        }));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final String sessionToken = data["session_token"];
-      return sessionToken;
-    } else if (response.statusCode == 400) {
-      final data = json.decode(response.body);
-
-      final errors = checkForErrors(data);
-
-      throw InvalidCredentialsException(errors);
-    } else if (response.statusCode == 500) {
-      final data = jsonDecode(response.body);
-      final error = data["error"];
-      throw UnknownException(error["message"]);
-    } else if (response.statusCode == 422) {
-      final data = jsonDecode(response.body);
-      final error = data["message"];
-      throw UnknownException(error);
-    } else {
-      throw Exception();
-    }
-  }
-
-  Future<Map<String, dynamic>> getCurrentSession(String token) async {
-    final response = await http.get(
-      Uri.parse("$backendURL/whoami"),
-      headers: <String, String>{
-        "Accept": "application/json",
-        "Session_token": token
-      },
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Launch()),
+      (Route<dynamic> route) => false,
     );
-
-    if (response.statusCode == 200) {
-      final userData = jsonDecode(response.body);
-      return Map<String, dynamic>.from(userData["oryUser"]);
-    } else if (response.statusCode == 401) {
-      throw UnauthorizedException();
-    } else if (response.statusCode == 403 || response.statusCode == 500) {
-      final data = jsonDecode(response.body);
-      final error = data["error"];
-      throw UnknownException(error["message"]);
-    } else {
-      throw Exception();
-    }
   }
 
-  Map<String, String> checkForErrors(Map<String, dynamic> response) {
-    //for errors see https://www.ory.sh/kratos/docs/reference/api#operation/initializeSelfServiceLoginFlowWithoutBrowser
-    final ui = Map<String, dynamic>.from(response["ui"]);
-    final list = ui["nodes"];
-    final generalErrors = ui["messages"];
+  Future<bool> _createProfile(String email, String userId) {
+    var token = GetIt.instance<UserStorage>().getToken();
+    var user = GetIt.instance<UserStorage>().getUser();
 
-    Map errors = <String, String>{};
-    for (var i = 0; i < list.length; i++) {
-      //check if there are any input errors
-      final entry = Map<String, dynamic>.from(list[i]);
-      if ((entry["messages"] as List).isNotEmpty) {
-        final String name = entry["attributes"]["name"];
-        final message = entry["messages"][0] as Map<String, dynamic>;
-        errors.putIfAbsent(name, () => message["text"] as String);
+    if (token == null || user == null) {
+      return Future.value(false);
+    }
+
+    var backendUrl = dotenv.env['ACCOUNT_BACKEND'];
+    var url = "$backendUrl/account";
+
+    return http
+        .post(
+          Uri.parse(url),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': token,
+          },
+          body: jsonEncode(
+              <String, String>{'userId': user.id, 'email': user.email}),
+        )
+        .then((response) => HttpHelpers.isSuccess(response, url));
+  }
+
+  Future _setUser(gAuth.UserCredential userCredential) async {
+    var storage = GetIt.instance<UserStorage>();
+    storage
+        .setUser(User(userCredential.user!.email!, userCredential.user!.uid));
+    storage.setToken(await userCredential.user!.getIdToken());
+  }
+
+  Future<LoginResult> signInWithGoogle({required BuildContext context}) async {
+    gAuth.FirebaseAuth auth = gAuth.FirebaseAuth.instance;
+    gAuth.User? user;
+
+    if (kIsWeb) {
+      gAuth.GoogleAuthProvider authProvider = gAuth.GoogleAuthProvider();
+
+      try {
+        final gAuth.UserCredential userCredential =
+            await auth.signInWithPopup(authProvider);
+
+        user = userCredential.user;
+      } catch (e) {
+        print(e);
+      }
+    } else {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+
+      final GoogleSignInAccount? googleSignInAccount =
+          await googleSignIn.signIn();
+
+      if (googleSignInAccount != null) {
+        final GoogleSignInAuthentication googleSignInAuthentication =
+            await googleSignInAccount.authentication;
+
+        final gAuth.AuthCredential credential =
+            gAuth.GoogleAuthProvider.credential(
+          accessToken: googleSignInAuthentication.accessToken,
+          idToken: googleSignInAuthentication.idToken,
+        );
+
+        try {
+          final gAuth.UserCredential userCredential =
+              await auth.signInWithCredential(credential);
+
+          user = userCredential.user;
+          if (userCredential.user != null &&
+              userCredential.user?.email != null) {
+            await _setUser(userCredential);
+
+            return LoginResult(success: true);
+          }
+        } on gAuth.FirebaseAuthException catch (e) {
+          if (e.code == 'account-exists-with-different-credential') {
+            return LoginResult(
+                success: false, message: 'Provided credentials are invalid.');
+          } else if (e.code == 'invalid-credential') {
+            return LoginResult(
+                success: false, message: 'Provided credentials are invalid.');
+          }
+        } catch (e) {
+          return LoginResult(
+              success: false,
+              message: 'Unknown error occurred, please try again.');
+        }
       }
     }
 
-    if (generalErrors != null) {
-      //check if there is a general error
-      final message = (generalErrors as List)[0] as Map<String, dynamic>;
-      errors.putIfAbsent("general", () => message["text"] as String);
+    return LoginResult(
+        success: false, message: 'Unknown error occurred, please try again.');
+  }
+
+  Future<LoginResult> login(String email, String password) async {
+    try {
+      gAuth.UserCredential userCredential = await gAuth.FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      if (userCredential.user != null && userCredential.user?.email != null) {
+        await _setUser(userCredential);
+
+        return Future.value(LoginResult(success: true));
+      }
+
+      return Future.value(LoginResult(success: false));
+    } on gAuth.FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        return Future.value(
+            LoginResult(success: false, message: 'User not found.'));
+      } else if (e.code == 'wrong-password') {
+        return Future.value(
+            LoginResult(success: false, message: 'Password incorrect'));
+      }
     }
 
-    return errors as Map<String, String>;
+    return Future.value(LoginResult(success: false, message: 'Unknown error.'));
   }
 }

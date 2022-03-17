@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobile/auth/login.dart';
@@ -5,18 +7,19 @@ import 'package:mobile/auth/sign-in.dart';
 import 'package:mobile/home.dart';
 import 'package:mobile/launch-screen/launch.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mobile/services/geolocation.dart';
+import 'package:mobile/services/location.dart';
+import 'package:mobile/storage/location-storage.dart';
+import 'package:mobile/storage/visits-storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mobile/storage/user-storage.dart';
 import 'firebase_options.dart';
 
-Future main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // You can request multiple permissions at once.
-  var locationPermissionStatus = Permission.location;
-
-  if (locationPermissionStatus != PermissionStatus.granted) {
+void _reuestPermission(PermissionWithService permission) async {
+  var permissionStatus = await permission.isGranted;
+  if (!permissionStatus) {
     PermissionStatus? locationRequestResult =
         await Permission.location.request();
 
@@ -24,9 +27,22 @@ Future main() async {
       return;
     }
   }
+}
+
+Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
   var getIt = GetIt.instance;
   getIt.registerSingleton(UserStorage());
+  getIt.registerSingleton(VisitsStorage());
+  getIt.registerSingleton(LocationStorage());
+
+  // You can request multiple permissions at once.
+  var requiredPermissions = [Permission.location, Permission.locationAlways];
+
+  for (var element in requiredPermissions) {
+    _reuestPermission(element);
+  }
 
   await dotenv.load(fileName: ".env");
 
@@ -39,8 +55,20 @@ Future main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    Geoservice().initialize();
+    LocationService().initialize();
+    super.initState();
+  }
 
   // This widget is the root of your application.
   @override
@@ -68,19 +96,5 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomeScreen(),
       },
     );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return const Launch();
   }
 }

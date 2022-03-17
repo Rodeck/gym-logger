@@ -1,27 +1,37 @@
 version: "3.9"
 services:
-  account-service:
-    restart: on-failure:5
-    build:
-      context: ./account-service
-      dockerfile: ./dockerfile
-    ports:
-      - "3001:80"
-      - "5678:5678"
-      - "9229:9229"
-    environment:
-      - environment=docker
   location-service:
-    restart: on-failure:5
+    restart: on-failure:10
     build:
       context: ./location-service
       dockerfile: ./dockerfile
     ports:
       - "3000:80"
-      - "5679:5678"
-      - "9230:9229"
+      - "9229:9229"
     environment:
       - environment=docker
+      - RABBIT_URL=amqp://user:pass@rabbitMq:5672/vhost
+  account-service:
+    restart: on-failure:10
+    build:
+      context: ./account-service
+      dockerfile: ./dockerfile
+    ports:
+      - "3001:80"
+    environment:
+      - environment=docker
+  gyms-service:
+    restart: on-failure:10
+    build:
+      context: ./gym-locations
+      dockerfile: ./dockerfile
+    ports:
+      - "3002:80"
+      - "9228:9229"
+    environment:
+      - environment=docker
+      - RABBIT_URL=amqp://user:pass@rabbitMq:5672/vhost
+      - "."
   db:
     image: 'mongo'
     container_name: 'instagram-mongo'
@@ -33,8 +43,10 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=3)R79ZP,:cv}r_5(
     volumes:
       - mongo-volume:/data/db
+    command: mongod --quiet --logpath /dev/null
   gateway:
     image: nginx
+    restart: on-failure:10
     ports:
       - "443:443"
       - "80:80"
@@ -42,6 +54,17 @@ services:
       - type: bind
         source: ./nginx/default.conf
         target: /etc/nginx/nginx.conf
+  rabbitmq:
+    restart: on-failure:10
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    environment: 
+      RABBITMQ_DEFAULT_PASS: pass
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_VHOST: vhost
 
 volumes:
   mongo-volume:

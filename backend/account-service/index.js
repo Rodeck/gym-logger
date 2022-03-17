@@ -12,7 +12,7 @@ const admin = require('./authentication/index');
 var postRoutes = require('./account/index')
 
 const environment = process.env.environment ?? 'local';
-const port = environment == 'local' ? 3001 : 80
+const port = environment == 'local' ? 3000 : 80
 
 app.use(cors())
 app.set('port', port);
@@ -31,7 +31,7 @@ app.use(async function (req, res, next) {
   next()
 })
 
-app.use('/account', postRoutes)
+app.use('/', postRoutes)
 
 const options = {
     definition: {
@@ -64,7 +64,7 @@ app.use(
 
 app.use(express.json())
 
-app.get('/', (req, res) => {
+app.get('/health', (req, res) => {
   res.send('Hello World from account service!')
 })
 
