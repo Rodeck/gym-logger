@@ -3,16 +3,16 @@ import express from 'express';
 import authMiddleware from '../middlewares/authMiddleware';
 import {authorize, getUserId} from '../authentication/auth';
 import {create, getAll, getNearby} from './services/gyms-service';
+import * as bodyParser from 'body-parser';
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
 
-const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 
 router.all('/', authMiddleware);
 
-router.post('/', jsonParser, authorize, function(req, res) {
+router.post('/', jsonParser, authorize, (req, res) => {
   const userId = getUserId(req);
   const newGym = {
     userId,
@@ -26,7 +26,7 @@ router.post('/', jsonParser, authorize, function(req, res) {
   res.send(newGym);
 });
 
-router.get('/', jsonParser, authorize, async function(req, res) {
+router.get('/', jsonParser, authorize, async (req, res) => {
   const userId = getUserId(req);
   const locationsForUser = await getAll(userId);
 
@@ -34,7 +34,7 @@ router.get('/', jsonParser, authorize, async function(req, res) {
 });
 
 router.get('/nearby', jsonParser, authorize,
-    async function(req, res) {
+    async (req, res) => {
       const latitude = Number.parseFloat(req.query.latitude as string);
       const longitude = Number.parseFloat(req.query.longitude as string);
       const userId = getUserId(req);

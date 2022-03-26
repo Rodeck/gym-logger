@@ -1,6 +1,6 @@
-import {Collection, Db, MongoClient,
-  MongoClientOptions, ObjectId, Document, OptionalId} from 'mongodb';
 import config from './../config';
+import {Schema, model, connect, ConnectOptions} from 'mongoose';
+import {Gym} from '../gyms/models/gym';
 
 const configuration = {
   url: config.DB_URL,
@@ -8,37 +8,31 @@ const configuration = {
   password: config.DB_PASSWORD,
 };
 
-const clientOptions: MongoClientOptions = {
-  auth: {
-    username: configuration.username,
-    password: configuration.password,
-  },
+const clientOptions: ConnectOptions = {
+  pass: configuration.password,
+  user: configuration.username,
 };
 
-const dbName = 'store';
+const gymSchema = new Schema<Gym>({
+  name: {type: String, required: true},
+  lat: {type: Number, required: true},
+  lng: {type: Number, required: true},
+  createdDate: {type: Date, required: true},
+  userId: {type: String, required: true},
+});
 
-let db: Db;
+const GymModel = model<Gym>('Gym', gymSchema);
 
-export const init = () =>
-  MongoClient.connect(configuration.url, clientOptions).then((client) => {
-    db = client.db(dbName);
-  });
+export const init = async () => await connect(configuration.url, clientOptions);
 
-export const insertItem = (
-    item: OptionalId<Document>,
-    collectionName: string) => {
-  const collection = db.collection(collectionName);
-  const id = new ObjectId();
-  item._id = id;
-  return collection.insertOne(item);
+export const insertItem = async (item: Gym) => {
+  const gym = new GymModel(item);
+
+  await gym.save();
 };
 
-export const getItems = (collectionName: string) : Collection<Document> => {
-  const collection = db.collection(collectionName);
-  return collection;
-};
-
-export const getCollection = (collectionName: string)
-    : Collection<Document> => {
-  return db.collection(collectionName);
+export const getItems = async (userId: string) : Promise<Gym[]> => {
+  return await GymModel.find().where({
+    userId,
+  }).exec();
 };

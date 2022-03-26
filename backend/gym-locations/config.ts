@@ -1,7 +1,7 @@
-import path from "path";
-import dotenv from "dotenv";
+import path from 'path';
+import dotenv from 'dotenv';
 
-dotenv.config({ path: path.resolve(__dirname, "../config/config.env") });
+dotenv.config({path: path.resolve(__dirname, '../config/config.env')});
 
 interface ProcessEnv {
   NODE_ENV: string | undefined;
@@ -43,8 +43,8 @@ const getSanitzedConfig = (config: ProcessEnv): Config => {
   return config as Config;
 };
 
-const config = getConfig();
+const rawConfig = getConfig();
 
-const sanitizedConfig = getSanitzedConfig(config);
+const sanitizedConfig = getSanitzedConfig(rawConfig);
 
 export default sanitizedConfig;

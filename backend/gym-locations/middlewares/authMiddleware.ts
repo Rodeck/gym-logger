@@ -1,6 +1,9 @@
 import {UserRequest} from '../gyms/models/userRequest';
 import admin from './../authentication/';
 import {Response, NextFunction} from 'express';
+import {createLogger} from '../logger';
+
+const logger = createLogger();
 
 export default async function(req : UserRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.headers.authorization;
@@ -10,7 +13,9 @@ export default async function(req : UserRequest, res: Response, next: NextFuncti
       if (decodeValue) {
         req.user = decodeValue;
       }
-    } catch { }
+    } catch {
+      logger.warn('Unauthorized access.');
+    }
   }
   next();
 }
