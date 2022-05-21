@@ -1,0 +1,6 @@
+serviceAccount.json
+.env
+/bin
+/obj
+.vscode
+appsettings.json
