@@ -1,10 +1,12 @@
 import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart' as gAuth;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:logger/logger.dart';
 import 'package:mobile/helpers/http_helpers.dart';
 import 'package:mobile/launch-screen/launch.dart';
 import 'package:mobile/models/login-result.dart';
@@ -13,6 +15,8 @@ import 'package:mobile/storage/user-storage.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthService {
+  static final Logger _logger = Logger();
+
   Future logout(BuildContext context) async {
     var storage = GetIt.instance<UserStorage>();
 
@@ -53,7 +57,9 @@ class AuthService {
     var storage = GetIt.instance<UserStorage>();
     storage
         .setUser(User(userCredential.user!.email!, userCredential.user!.uid));
-    storage.setToken(await userCredential.user!.getIdToken());
+    var token = await userCredential.user!.getIdToken();
+    _logger.i('token: $token');
+    storage.setToken(token);
   }
 
   Future<LoginResult> signInWithGoogle({required BuildContext context}) async {
