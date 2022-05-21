@@ -2,9 +2,12 @@
 /* eslint-disable no-console */
 import {Gym} from '../models/gym';
 import jackrabbit from 'jackrabbit';
-import {Distance} from 'geo-distance';
 import {insertItem, getItems} from '../../db';
 import {createLogger} from '../../logger';
+import Distance from '../../util/distance';
+
+// tslint:disable-next-line: no-console
+console.log(process.env.RABBIT_URL);
 
 const rabbit = jackrabbit(process.env.RABBIT_URL);
 const exchange = rabbit.default();
@@ -44,8 +47,8 @@ export const isNearby = (currentLocation: { lat: number; lng: number; },
 
   logger.log({
     level: 'info',
-    message: `${distance} is closer than 10m: ${distance < Distance('10 m')}`,
+    message: `${distance} is closer than 10m: ${distance < 0.001}`,
   });
 
-  return distance < Distance('10 m');
+  return distance < 0.001;
 };

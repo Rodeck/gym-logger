@@ -5,7 +5,7 @@ export function authorize(req : UserRequest, res: Response, next: NextFunction) 
   if (req.user) {
     next();
   } else {
-    res.status(200).send();
+    res.status(401).send();
   }
 }
 

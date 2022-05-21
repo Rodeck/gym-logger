@@ -4,6 +4,7 @@ import authMiddleware from '../middlewares/authMiddleware';
 import {authorize, getUserId} from '../authentication/auth';
 import {create, getAll, getNearby} from './services/gyms-service';
 import * as bodyParser from 'body-parser';
+import {Gym} from './models/gym';
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
@@ -11,20 +12,31 @@ const router = express.Router();
 const jsonParser = bodyParser.json();
 
 router.all('/', authMiddleware);
+router.all('/nearby', authMiddleware);
 
 router.post('/', jsonParser, authorize, (req, res) => {
   const userId = getUserId(req);
   const newGym = {
     userId,
-    lat: req.body.latitude,
-    lng: req.body.longitude,
+    lat: req.body.lat,
+    lng: req.body.lng,
     createdDate: new Date(),
     name: req.body.name,
   };
+
+  if (!validateGym(newGym)) {
+    res.status(400).send('Invalid gym');
+    return;
+  }
+
   create(newGym);
 
   res.send(newGym);
 });
+
+function validateGym(gym: Gym) : boolean {
+  return gym.lat != null && gym.lng != null && gym.name != null;
+}
 
 router.get('/', jsonParser, authorize, async (req, res) => {
   const userId = getUserId(req);
@@ -33,19 +45,27 @@ router.get('/', jsonParser, authorize, async (req, res) => {
   res.send(locationsForUser);
 });
 
+router.get('/test', jsonParser, authorize, async (req, res) => {
+  res.send('success');
+});
+
 router.get('/nearby', jsonParser, authorize,
-    async (req, res) => {
-      const latitude = Number.parseFloat(req.query.latitude as string);
-      const longitude = Number.parseFloat(req.query.longitude as string);
-      const userId = getUserId(req);
+    async (req, res, next) => {
+      try {
+        const latitude = Number.parseFloat(req.query.latitude as string);
+        const longitude = Number.parseFloat(req.query.longitude as string);
+        const userId = getUserId(req);
 
-      if (latitude == null || longitude == null) {
-        res.statusCode = 400;
-        res.send();
+        if (latitude == null || longitude == null) {
+          res.statusCode = 400;
+          res.send();
+        }
+
+        const nearbyLocations = await getNearby(userId, latitude, longitude);
+        res.send(nearbyLocations);
+      } catch (error) {
+        next(error);
       }
-
-      const nearbyLocations = await getNearby(userId, latitude, longitude);
-      res.send(nearbyLocations);
     });
 
 export default router;

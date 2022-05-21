@@ -1,12 +1,11 @@
 
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import {init} from './db';
 import cors from 'cors';
 import express from 'express';
 import router from './gyms/index';
 import winston from 'winston';
-
-dotenv.config();
+import errorMiddleware from './middlewares/errorMiddleware';
 
 const logger = winston.createLogger({
   level: 'info',
@@ -42,6 +41,8 @@ app.use(express.json());
 app.get('/health', (req, res) => {
   res.send('Hello World from gym locations service!');
 });
+
+app.use(errorMiddleware);
 
 init().then(() => {
   logger.info(`starting server on port ${port}`);

@@ -13,8 +13,8 @@ export default async function(req : UserRequest, res: Response, next: NextFuncti
       if (decodeValue) {
         req.user = decodeValue;
       }
-    } catch {
-      logger.warn('Unauthorized access.');
+    } catch (e) {
+      logger.warn('Unauthorized access.', e);
     }
   }
   next();

@@ -1,16 +1,16 @@
-import config from './../config';
 import {Schema, model, connect, ConnectOptions} from 'mongoose';
 import {Gym} from '../gyms/models/gym';
 
 const configuration = {
-  url: config.DB_URL,
-  username: config.DB_USERNAME,
-  password: config.DB_PASSWORD,
+  url: process.env.DB_URL,
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
 };
 
 const clientOptions: ConnectOptions = {
   pass: configuration.password,
   user: configuration.username,
+  dbName: 'gyms',
 };
 
 const gymSchema = new Schema<Gym>({
