@@ -52,8 +52,8 @@ router.get('/test', jsonParser, authorize, async (req, res) => {
 router.get('/nearby', jsonParser, authorize,
     async (req, res, next) => {
       try {
-        const latitude = Number.parseFloat(req.query.latitude as string);
-        const longitude = Number.parseFloat(req.query.longitude as string);
+        const latitude = (+(req.query.lat as string).replace(",", "."));
+        const longitude = (+(req.query.lng as string).replace(",", "."));
         const userId = getUserId(req);
 
         if (latitude == null || longitude == null) {
