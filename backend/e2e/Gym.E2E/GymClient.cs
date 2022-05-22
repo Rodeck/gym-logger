@@ -26,7 +26,7 @@ public class GymClient : IGymService
     public async Task CreateGym(CreateGymModel gym)
     {
         var token = await accessProvider.GetToken();
-        var createGymUri = options.Value.GymsEndpoint;
+        var createGymUri = $"{options.Value.GymsEndpoint}/";
         using var client = clientFactory.CreateClient();
         client.DefaultRequestHeaders.Add("Authorization", $"{token}");
 
@@ -35,13 +35,13 @@ public class GymClient : IGymService
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new InvalidOperationException($"Failed to create gym with code: {response.StatusCode}");
+            throw new InvalidOperationException($"Failed to create gym with code: {response.StatusCode}, error: {await response.Content.ReadAsStringAsync()}");
         }
     }
 
     public async Task<IEnumerable<GymModel>> GetGyms()
     {
-        var getGymUri = options.Value.GymsEndpoint;
+        var getGymUri = $"{options.Value.GymsEndpoint}/";
 
         using var client = clientFactory.CreateClient();
         await accessProvider.Authorize(client);

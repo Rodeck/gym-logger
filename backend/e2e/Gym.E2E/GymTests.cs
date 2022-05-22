@@ -8,7 +8,30 @@ using Microsoft.Extensions.Logging;
 
 namespace Gym.E2E;
 
-public class GymsTests : IClassFixture<GymsTests>, IAsyncLifetime
+public class GymsTestsFixture: IDisposable
+{
+    private readonly IConfiguration _configuration = ConfigurationBuilder.Build();
+    private readonly ILogger<GymsTests> logger = LoggerFactory.Create(b => b.AddConsole())
+        .CreateLogger<GymsTests>();
+
+    public GymsTestsFixture()
+    {
+        InitializeAsync().GetAwaiter().GetResult();
+    }
+
+    public void Dispose()
+    {
+    }
+
+    public async Task InitializeAsync()
+    {
+        var healthChecker = new HealthCheck<ILogger<GymsTests>>(_configuration, logger);
+
+        await healthChecker.CheckHealth("GymsEndpoint");
+    }
+}
+
+public class GymsTests : IClassFixture<GymsTestsFixture>
 {
     private readonly IConfiguration _configuration = ConfigurationBuilder.Build();
     private readonly ILogger<GymsTests> logger = LoggerFactory.Create(b => b.AddConsole())
@@ -88,13 +111,6 @@ public class GymsTests : IClassFixture<GymsTests>, IAsyncLifetime
     public Task DisposeAsync()
     {
         return Task.CompletedTask;
-    }
-
-    public Task InitializeAsync()
-    {
-        var healthChecker = new HealthCheck<ILogger<GymsTests>>(_configuration, logger);
-
-        return healthChecker.CheckHealth("GymsEndpoint");
     }
 
     private IServiceProvider GetProvider()

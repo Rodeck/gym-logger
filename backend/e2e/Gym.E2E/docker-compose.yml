@@ -44,7 +44,8 @@ services:
     build: .
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=serviceAccount.json
-      - Gym__GymsEndpoint="http://docker.host.internal:80"
+      - Gym__GymsEndpoint=http://gateway/gyms
+      - Gym__FirebaseGymApiKey=${FirebaseGymApiKey}
     depends_on:
       - gyms-service
 

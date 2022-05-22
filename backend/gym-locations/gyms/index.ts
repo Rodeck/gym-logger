@@ -45,10 +45,6 @@ router.get('/', jsonParser, authorize, async (req, res) => {
   res.send(locationsForUser);
 });
 
-router.get('/test', jsonParser, authorize, async (req, res) => {
-  res.send('success');
-});
-
 router.get('/nearby', jsonParser, authorize,
     async (req, res, next) => {
       try {

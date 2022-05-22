@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Gym.E2E;
 
@@ -24,11 +25,11 @@ public class HealthCheck<TLogger> : IHealthCheck<TLogger>
         var client = new HttpClient();
 
         int attempt = 0;
-        while(attempt < 5)
+        while(attempt < 15)
         {
             try
             {
-                var result = await client.GetAsync(address);
+                var result = await client.GetAsync($"{address}/health");
 
                 if(result.IsSuccessStatusCode)
                 {
@@ -36,19 +37,18 @@ public class HealthCheck<TLogger> : IHealthCheck<TLogger>
                     return true;
                 }
 
-                logger.LogWarning($"{endpoint} is not healthy");
-                await Task.Delay(500);
+                logger.LogWarning($"{endpoint} is not healthy, attempt: {attempt}, {result.StatusCode}");
+                await Task.Delay(1000);
                 attempt++;
             }
-            catch
+            catch(Exception ex)
             {
-                logger.LogWarning($"{endpoint} is not healthy");
-                await Task.Delay(500);
+                logger.LogError(ex, $"{endpoint} is not healthy, attempt: {attempt}");
+                await Task.Delay(1000);
                 attempt++;
-                continue;
             }
         }
 
-        return false;
+        throw new Exception("Health check failed.");
     }
 }
