@@ -5,6 +5,7 @@ import {authorize, getUserId} from '../authentication/auth';
 import {create, getAll, getNearby} from './services/gyms-service';
 import * as bodyParser from 'body-parser';
 import {Gym} from './models/gym';
+import {ObjectId} from 'mongodb';
 
 // eslint-disable-next-line new-cap
 const router = express.Router();
@@ -22,6 +23,7 @@ router.post('/', jsonParser, authorize, (req, res) => {
     lng: req.body.lng,
     createdDate: new Date(),
     name: req.body.name,
+    _id: new ObjectId(),
   };
 
   if (!validateGym(newGym)) {

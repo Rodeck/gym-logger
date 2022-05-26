@@ -51,16 +51,6 @@ services:
     depends_on:
       - rabbitmq
     restart: on-failure:5
-  tests:
-    build: .
-    environment:
-      - GOOGLE_APPLICATION_CREDENTIALS=serviceAccount.json
-      - Auth__FirebaseGymApiKey=${FirebaseGymApiKey}
-      - Gym__Endpoint=http://gateway/gyms
-      - Visit__Endpoint=http://gateway/visits
-    depends_on:
-      - gyms-service
-      - visits-service
 
 volumes:
   mongo-volume:

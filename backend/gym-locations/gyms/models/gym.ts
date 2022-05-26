@@ -1,4 +1,4 @@
-import {Document} from 'mongodb';
+import {Document, ObjectId} from 'mongodb';
 
 export interface Gym extends Document {
     name: string;
@@ -6,4 +6,5 @@ export interface Gym extends Document {
     lng: number;
     createdDate: Date;
     userId: string;
+    _id: ObjectId;
 }

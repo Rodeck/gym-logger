@@ -5,7 +5,7 @@ namespace Gym.E2E;
 
 public interface IGymService
 {
-    public Task CreateGym(CreateGymModel createGymModel);
+    public Task<GymModel> CreateGym(CreateGymModel createGymModel);
 
     public Task<IEnumerable<GymModel>> GetGyms();
 

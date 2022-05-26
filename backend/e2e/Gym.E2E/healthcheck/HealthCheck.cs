@@ -20,7 +20,7 @@ public class HealthCheck<TLogger> : IHealthCheck<TLogger>
 
     public async Task<bool> CheckHealth(string endpoint)
     {
-        var address = configuration.GetSection("Gym").GetValue<string>(endpoint);
+        var address = configuration.GetSection(endpoint).GetValue<string>("Endpoint");
 
         var client = new HttpClient();
 

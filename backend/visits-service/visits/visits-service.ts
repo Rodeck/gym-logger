@@ -4,6 +4,7 @@ import {Visit} from './models/visit';
 import {insertVisit, getGym, getVisits, getRecentVisits} from './../db';
 import {createLogger} from './../logger';
 import {CreateVisit} from './models/createVisit';
+import {ObjectId} from 'mongodb';
 
 const logger = createLogger();
 
@@ -25,7 +26,7 @@ export const create = async (item: CreateVisit): Promise<void> => {
     lng: item.lng,
     userId: item.userId,
     createdDate: item.createdDate,
-    gym: gym.key,
+    gymId: new ObjectId(item.gymId),
   };
   logger.info(`Creating new visit: ${JSON.stringify(visit)}`);
   insertVisit(visit);

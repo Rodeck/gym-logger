@@ -5,5 +5,5 @@ export interface Visit extends Document {
     lng: number;
     createdDate: Date;
     userId: string;
-    gym: ObjectId;
+    gymId: ObjectId;
 }

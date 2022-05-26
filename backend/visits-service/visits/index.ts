@@ -18,8 +18,8 @@ router.post('/', jsonParser, authorize, (req, res) => {
   const userId = getUserId(req);
   const newVisit: CreateVisit = {
     userId,
-    lat: req.body.latitude,
-    lng: req.body.longitude,
+    lat: req.body.lat,
+    lng: req.body.lng,
     createdDate: new Date(),
     gymId: req.body.gymId,
   };

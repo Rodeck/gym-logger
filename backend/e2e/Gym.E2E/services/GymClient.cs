@@ -10,12 +10,12 @@ namespace Gym.E2E;
 
 public class GymClient : IGymService
 {
-    private readonly IOptions<EndpointsConfig> options;
+    private readonly IOptions<GymsConfig> options;
     private readonly IAccessProvider accessProvider;
     private readonly IHttpClientFactory clientFactory;
     private readonly ILogger<GymClient> logger;
 
-    public GymClient(IOptions<EndpointsConfig> options, IAccessProvider accessProvider, IHttpClientFactory clientFactory, ILogger<GymClient> logger)
+    public GymClient(IOptions<GymsConfig> options, IAccessProvider accessProvider, IHttpClientFactory clientFactory, ILogger<GymClient> logger)
     {
         this.options = options;
         this.accessProvider = accessProvider;
@@ -23,10 +23,10 @@ public class GymClient : IGymService
         this.logger = logger;
     }
 
-    public async Task CreateGym(CreateGymModel gym)
+    public async Task<GymModel> CreateGym(CreateGymModel gym)
     {
         var token = await accessProvider.GetToken();
-        var createGymUri = $"{options.Value.GymsEndpoint}/";
+        var createGymUri = $"{options.Value.Endpoint}/";
         using var client = clientFactory.CreateClient();
         client.DefaultRequestHeaders.Add("Authorization", $"{token}");
 
@@ -37,11 +37,13 @@ public class GymClient : IGymService
         {
             throw new InvalidOperationException($"Failed to create gym with code: {response.StatusCode}, error: {await response.Content.ReadAsStringAsync()}");
         }
+
+        return await response.Content.ReadFromJsonAsync<GymModel>();
     }
 
     public async Task<IEnumerable<GymModel>> GetGyms()
     {
-        var getGymUri = $"{options.Value.GymsEndpoint}/";
+        var getGymUri = $"{options.Value.Endpoint}/";
 
         using var client = clientFactory.CreateClient();
         await accessProvider.Authorize(client);
@@ -53,7 +55,7 @@ public class GymClient : IGymService
 
     public async Task<IEnumerable<GymModel>> GetNearby(Coordinates coordinates)
     {
-        var getGymUri = $"{options.Value.GymsEndpoint}/nearby?lat={coordinates.Lat}&lng={coordinates.Lng}";
+        var getGymUri = $"{options.Value.Endpoint}/nearby?lat={coordinates.Lat}&lng={coordinates.Lng}";
 
         using var client = clientFactory.CreateClient();
         await accessProvider.Authorize(client);

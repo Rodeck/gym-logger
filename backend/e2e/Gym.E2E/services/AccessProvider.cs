@@ -9,10 +9,10 @@ namespace Gym.E2E;
 
 public class AccessProvider : IAccessProvider
 {
-    private readonly IOptions<EndpointsConfig> options;
+    private readonly IOptions<AuthConfig> options;
     private string CachedToken;
 
-    public AccessProvider(IOptions<EndpointsConfig> options)
+    public AccessProvider(IOptions<AuthConfig> options)
     {
         this.options = options;
     }
@@ -48,7 +48,7 @@ public class AccessProvider : IAccessProvider
         return CachedToken;
     }
 
-    private async Task<string> GetTokenInternal(EndpointsConfig config)
+    private async Task<string> GetTokenInternal(AuthConfig config)
     {
         var authProvider = new FirebaseAuthProvider(new FirebaseConfig(config.FirebaseGymApiKey));
 

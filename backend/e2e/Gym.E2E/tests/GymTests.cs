@@ -27,7 +27,8 @@ public class GymsTestsFixture: IDisposable
     {
         var healthChecker = new HealthCheck<ILogger<GymsTests>>(_configuration, logger);
 
-        await healthChecker.CheckHealth("GymsEndpoint");
+        await healthChecker.CheckHealth("Gym");
+        await healthChecker.CheckHealth("Visit");
     }
 }
 
@@ -66,7 +67,8 @@ public class GymsTests : IClassFixture<GymsTestsFixture>
             .And
             .ContainEquivalentOf(expectedGym, cfg =>
                 cfg.Excluding(g => g.UserId)
-                .Excluding(g => g.CreatedDate));
+                .Excluding(g => g.CreatedDate)
+                .Excluding(g => g.Id));
     }
 
     
@@ -105,7 +107,48 @@ public class GymsTests : IClassFixture<GymsTestsFixture>
             .And
             .ContainEquivalentOf(expectedGym, cfg =>
                 cfg.Excluding(g => g.UserId)
-                .Excluding(g => g.CreatedDate));
+                .Excluding(g => g.CreatedDate)
+                .Excluding(g => g.Id));
+    }
+
+    [Fact]
+    public async Task CreateGymInVisitsService()
+    {
+        var provider = GetProvider();
+
+        var client = provider.GetRequiredService<IGymService>();
+        var visitsClient = provider.GetRequiredService<IVisitsService>();
+
+        var gym = new CreateGymModel()
+        {
+            Lat = 123.123,
+            Lng = 123.123,
+            Name = Guid.NewGuid().ToString(),
+        };
+        
+        var newGym = await client.CreateGym(gym);
+
+        // Give message queue time to process
+        await Task.Delay(1000);
+
+        // Create visit with given gym, if this succeeds, the gym was created in the visits service
+        await visitsClient.CreateVisit(newGym.Id, new Coordinates()
+        {
+            Lat = newGym.Lat,
+            Lng = newGym.Lng,
+        });
+
+        var visits = await visitsClient.GetUserVisits();
+
+        var expectedVisit = new VisitModel()
+        {
+            GymId = newGym.Id,
+            Lat = newGym.Lat,
+            Lng = newGym.Lng,
+        };
+
+        visits.Should()
+            .ContainEquivalentOf(expectedVisit, cfg => cfg.Excluding(g => g.CreatedDate).Excluding(g => g.UserId));
     }
 
     public Task DisposeAsync()
@@ -116,9 +159,12 @@ public class GymsTests : IClassFixture<GymsTestsFixture>
     private IServiceProvider GetProvider()
     {
         IServiceCollection collection = new ServiceCollection();
-        collection.Configure<EndpointsConfig>(_configuration.GetSection("Gym"));
+        collection.Configure<GymsConfig>(_configuration.GetSection("Gym"));
+        collection.Configure<AuthConfig>(_configuration.GetSection("Auth"));
+        collection.Configure<VisitConfig>(_configuration.GetSection("Visit"));
 
         collection.AddTransient<IGymService, GymClient>();
+        collection.AddTransient<IVisitsService, VisitClient>();
         collection.AddSingleton<IAccessProvider, AccessProvider>();
         collection.AddHttpClient();
         collection.AddLogging();

@@ -5,7 +5,7 @@ namespace Gym.E2E;
 
 public static class FirebaseAuthExtensions
 {
-    public static async Task EnsureUserExists(this FirebaseAdmin.Auth.FirebaseAuth auth, EndpointsConfig config)
+    public static async Task EnsureUserExists(this FirebaseAdmin.Auth.FirebaseAuth auth, AuthConfig config)
     {
         try
         {

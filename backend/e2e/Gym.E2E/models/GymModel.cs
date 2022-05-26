@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace Gym.E2E;
 
@@ -13,4 +14,7 @@ public class GymModel
     public DateTime CreatedDate { get; set; }
 
     public string UserId { get; set; }
+
+    [JsonPropertyName("_id")]
+    public string Id { get; set; }
 }
